@@ -1,0 +1,22 @@
+name: spirals-py
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - jupyterlab
+  - openpyxl
+  - h5py
+  - scikit-image
+  - scikit-learn
+  - tifffile
+  - seaborn
+  - statsmodels
+  - pip
+  - pip:
+      - opencv-python
+      - pynrrd
+      - colorcet

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spirals-py"
+version = "0.1.0"
+description = "Python translation of Ye et al. 2023 spirals analysis code"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "matplotlib",
+    "openpyxl",
+    "h5py",
+    "scikit-image",
+    "scikit-learn",
+    "tifffile",
+    "seaborn",
+    "statsmodels",
+    "opencv-python",
+    "pynrrd",
+]
+
+[tool.setuptools.packages.find]
+include = ["spirals_py*"]
