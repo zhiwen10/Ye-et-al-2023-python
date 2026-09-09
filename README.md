@@ -23,7 +23,11 @@ Install [Anaconda](https://www.anaconda.com/download) or
 it yet.
 
 **(China users) configure the Tsinghua mirror first** — default channels can be
-very slow. Create/edit `~/.condarc` (`C:\Users\<you>\.condarc` on Windows):
+very slow. Create/edit `~/.condarc` (`C:\Users\<you>\.condarc` on Windows;
+it is just a plain YAML text file named `.condarc`). The mirror is configured
+per-user here rather than in `environment.yml`, because `channels:` entries in
+`environment.yml` only apply during env creation, don't affect pip, and would
+force a regional mirror on everyone:
 
 ```yaml
 channels:
