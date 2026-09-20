@@ -12,7 +12,9 @@ analysis), translated module by module from
 - `notebooks/` — Jupyter notebooks translated from the top-level MATLAB scripts
   (`data_overview.m`, `figure1_spirals.m` … `figure6_task.m`), including the
   Extended Data figures. All notebooks execute end-to-end against the paper's
-  data release.
+  data release. The `pipeline*_*.ipynb` notebooks translate the preprocessing
+  pipelines and regenerate the intermediate `.mat` files the figure notebooks
+  read (e.g. `pipeline6_task.ipynb` rewrites everything under `task/`).
 
 ## Installation (conda)
 
@@ -114,3 +116,4 @@ Open any notebook in `notebooks/` and run the cells top to bottom.
 | `figure4_ephys.ipynb` | `figure4_ephys.m` (Fig. 4 + Ext. Data 12–13) |
 | `figure5_whisker.ipynb` | `figure5_whisker.m` (Fig. 5) |
 | `figure6_task.ipynb` | `figure6_task.m` (Fig. 6 + Ext. Data 14–15) |
+| `pipeline6_task.ipynb` | `pipeline6_task.m` (task preprocessing: regenerates the `task/*.mat` files) |

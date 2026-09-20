@@ -335,6 +335,84 @@ fig6_sections = [
 SAVE_XLSX = 'save_folder = FIGURE_FOLDER / "{name}"\nsave_folder.mkdir(parents=True, exist_ok=True)'
 SESSION_ROWS = "session_rows = list(range(6))  # MATLAB 1:6 (plot 6/15 sessions)"
 
+TP = "spirals_py.task.preprocessing"
+
+
+def pipeline_cell(func, comment=None, extra="", args=None):
+    """One preprocessing call per cell, mirroring pipeline6_task.m."""
+    args = args or "DATA_FOLDER, save_folder"
+    src = f"from {TP}.{func} import {func}\n\n"
+    if extra:
+        src += extra + "\n"
+    if comment:
+        src += f"# {comment}\n"
+    src += f"{func}({args})"
+    return src
+
+
+SPIRALS_SAVE = 'save_folder = DATA_FOLDER / "task" / "spirals"'
+
+
+def make_pipeline6():
+    """notebooks/pipeline6_task.ipynb, mirroring pipeline6_task.m."""
+    nb = nbf.v4.new_notebook(metadata=KERNEL)
+    nbc = nb.cells
+    nbc.append(nbf.v4.new_markdown_cell(
+        "# pipeline6_task\n\nPython translation of `pipeline6_task.m` from Ye et al. 2023 "
+        "(spirals): task preprocessing pipeline. Regenerates every `task/*.mat` file "
+        "consumed by `notebooks/figure6_task.ipynb` from the raw data release.\n\n"
+        "No figures are produced; progress is printed per mouse/session."))
+    nbc.append(nbf.v4.new_code_cell(
+        '# pipeline task\nfrom pathlib import Path\n\nDATA_FOLDER = Path(r"D:\\data")'))
+    sections = [
+        ("get psychometric curve and trial outcome", [
+            ("getPsychometricCurve",
+             'save_folder = DATA_FOLDER / "task" / "psychometric_curve"',
+             "get psychometric curves for all subjects"),
+            ("getTaskTrialOutcome",
+             'save_folder = DATA_FOLDER / "task" / "task_outcome"',
+             "get task trial outcome for each trial"),
+        ]),
+        ("get mean maps for different trial types", [
+            ("getMeanMapSession",
+             'save_folder = DATA_FOLDER / "task" / "task_mean_maps"',
+             "get mean map for all contrast and trial types across sessions"),
+            ("getMeanMapsAll",
+             'save_folder = DATA_FOLDER / "task" / "task_mean_maps"',
+             "average mean maps at [-2,2]s around stim onset for 3 trial types"),
+        ]),
+        ("get spirals for different trial types", [
+            ("getCorrectSpiralDensity", SPIRALS_SAVE, None),
+        ]),
+        ("get phase and amplitude around stim onset in VISp", [
+            ("getTaskOnsetPhase", SPIRALS_SAVE + "\n\nfreq1 = [0.05, 2]",
+             "get phase and amplitude around onset time",
+             "DATA_FOLDER, save_folder, freq1"),
+            ("getTaskOnsetPhase", SPIRALS_SAVE + "\n\nfreq2 = [2, 8]",
+             "get phase and amplitude around onset time",
+             "DATA_FOLDER, save_folder, freq2"),
+        ]),
+        ("spirals during each trial", [
+            ("getTaskSpirals", SPIRALS_SAVE,
+             "task spirals at [-2,2]s around onset time in each trial"),
+            ("getPassiveSpirals", SPIRALS_SAVE,
+             "passive spirals at [-2,2]s around onset time in each trial"),
+            ("getSprialCountByRadiusTime", SPIRALS_SAVE,
+             "sort task spirals by radius and time around stim onset"),
+            ("getPassiveSpiralPrePost", SPIRALS_SAVE,
+             "concatenate all passive spirals before and after stim onset"),
+            ("getCorrectSpiralPrePost", SPIRALS_SAVE,
+             "concatenate all task spirals before and after stim onset"),
+        ]),
+    ]
+    for header, entries in sections:
+        nbc.append(nbf.v4.new_markdown_cell(f"## {header}"))
+        for entry in entries:
+            func, extra, comment, *args = entry
+            nbc.append(nbf.v4.new_code_cell(
+                pipeline_cell(func, comment, extra, args[0] if args else None)))
+    nbf.write(nb, NB / "pipeline6_task.ipynb")
+
 
 def make_fig1():
     nb = build(
@@ -348,6 +426,16 @@ def make_fig1():
 
 
 def main():
+    import sys
+
+    # selective generation, e.g. `python tools/make_notebooks.py pipeline6`,
+    # to avoid rewriting the (executed) figure notebooks
+    if len(sys.argv) > 1:
+        if "pipeline6" in sys.argv[1:]:
+            make_pipeline6()
+            print("written:", NB / "pipeline6_task.ipynb")
+        return
+
     # figure1
     nb = nbf.v4.new_notebook(metadata=KERNEL)
     nbc = nb.cells
@@ -431,6 +519,9 @@ def main():
             src = f"from {imp} import {func}\n\n# {comment}\n{func}({args})\nplt.show()"
             nbc.append(nbf.v4.new_code_cell(src))
     nbf.write(nb, NB / "figure6_task.ipynb")
+
+    # pipeline6
+    make_pipeline6()
 
     print("written:", [p.name for p in sorted(NB.glob("figure*.ipynb"))])
 
