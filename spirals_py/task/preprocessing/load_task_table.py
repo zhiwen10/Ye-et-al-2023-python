@@ -21,8 +21,16 @@ def load_task_table(path, varname="T_all"):
     the file's ``#refs#`` group; the two cells are matched by length and
     element order (verified against all ``task_outcome``/``trial_trace``
     files of this dataset).
+
+    v5 files (tables written by :func:`spirals_py.utils.matio.save_mat`
+    as plain structs of column arrays) fall back to
+    :func:`spirals_py.utils.matio.load_mat_table`.
     """
     path = Path(path)
+    from spirals_py.utils.matio import is_v73, load_mat_table
+
+    if not is_v73(path):
+        return load_mat_table(path, varname)
     with h5py.File(path, "r") as f:
         if varname not in f:
             raise KeyError(f"{varname} not found in {path}")
