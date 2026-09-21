@@ -8,6 +8,7 @@ from spirals_py.task.preprocessing._task_io import (
     nanmean,
     save_mat73,
 )
+from spirals_py.utils.paths import out_root, release_twin
 
 
 def getMeanMapsAll(data_folder, save_folder):
@@ -23,7 +24,7 @@ def getMeanMapsAll(data_folder, save_folder):
     labels = ["correct", "incorrect", "miss"]
     freq = [2, 8]
     Fs = 35
-    individual = Path(data_folder) / "task" / "task_mean_maps" / "individual"
+    individual = out_root() / "task" / "task_mean_maps" / "individual"
 
     trace_mean_all = np.zeros((83, 72, 141, 3))
     traceFilt_all = np.zeros((83, 72, 141, 3))
@@ -33,7 +34,8 @@ def getMeanMapsAll(data_folder, save_folder):
         # cat(5, ...) across mice, then mean over mice
         per_mouse = [
             load_mat_var(
-                individual / f"{mn}_mean_map_{label}.mat", "trace_correct_mean"
+                release_twin(individual / f"{mn}_mean_map_{label}.mat", data_folder),
+                "trace_correct_mean",
             )
             for mn in fnames
         ]

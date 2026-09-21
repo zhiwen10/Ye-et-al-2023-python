@@ -15,6 +15,7 @@ from spirals_py.spirals_mirror.preprocessing._regression_utils import (
     load_kernel_slice,
 )
 from spirals_py.utils.matio import save_mat73
+from spirals_py.utils.paths import out_root, release_twin
 
 SCALE = 8
 
@@ -61,7 +62,10 @@ def getMapsSession(T, data_folder, save_folder):
             # read svd components from processed data folder
             session_root = data_folder / "spirals" / "svd" / fname
             mimg = np.load(session_root / "meanImage.npy")
-            path = data_folder / "spirals_mirror" / subfolder / f"{fname}{suffix}"
+            path = release_twin(
+                out_root() / "spirals_mirror" / subfolder / f"{fname}{suffix}",
+                data_folder,
+            )
 
             mimgtransformed2 = _imwarp(
                 mimg, tform, projectedTemplate1.shape, stride=scale

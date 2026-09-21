@@ -12,6 +12,7 @@ from spirals_py.task.preprocessing._task_utils import (
     density_color_plot2,
 )
 from spirals_py.task.preprocessing.getConcatTrials import getConcatTrials
+from spirals_py.utils.paths import out_root, release_twin
 
 
 def getCorrectSpiralDensity(data_folder, save_folder):
@@ -31,7 +32,6 @@ def getCorrectSpiralDensity(data_folder, save_folder):
     save_folder = Path(save_folder)
     save_folder.mkdir(parents=True, exist_ok=True)
 
-    spiral_folder = data_folder / "task" / "spirals"
     labels = ["correct", "incorrect", "miss"]
     frames_pre = np.arange(62, 69)  # MATLAB 62:68
     frames_post = np.arange(76, 83)  # MATLAB 76:82
@@ -41,7 +41,10 @@ def getCorrectSpiralDensity(data_folder, save_folder):
     spiral_temp_post_all = [np.zeros((0, 5))] * 3
 
     for mn in TASK_MICE:
-        sort_file = spiral_folder / f"{mn}_spirals_task_sort.mat"
+        sort_file = release_twin(
+            out_root() / "task" / "spirals" / f"{mn}_spirals_task_sort.mat",
+            data_folder,
+        )
         spiral_all = load_mat_cell(sort_file, "spiral_all")
         T_all = load_mat_table(sort_file, "T_all")
         left = T_all.left_contrast.to_numpy()
@@ -50,9 +53,9 @@ def getCorrectSpiralDensity(data_folder, save_folder):
 
         for j, label in enumerate(labels):
             if j == 0:
-                indx = (lab == label) & (left - right) > 0
+                indx = (lab == label) & ((left - right) > 0)
             else:
-                indx = (lab == label) & np.abs(left - right) > 0
+                indx = (lab == label) & (np.abs(left - right) > 0)
             spiral_temp = spiral_all[indx, :]
             spiral_temp1 = getConcatTrials(spiral_temp)
             spiral_temp_pre = np.vstack([spiral_temp1[f - 1] for f in frames_pre])

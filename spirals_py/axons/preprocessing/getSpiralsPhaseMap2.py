@@ -21,6 +21,8 @@ loads.
 
 from pathlib import Path
 
+from tqdm import tqdm
+
 from spirals_py.axons.preprocessing.getSpiralsPhaseMap import _session_phase_maps
 from spirals_py.utils.matio import save_mat73
 
@@ -30,7 +32,7 @@ def getSpiralsPhaseMap2(T, data_folder, save_folder):
     save_folder = Path(save_folder)
     save_folder.mkdir(parents=True, exist_ok=True)
 
-    for kk in range(15):
+    for kk in tqdm(range(15), desc="getSpiralsPhaseMap2"):
         fname, spiral_phase_all_norm = _session_phase_maps(
             T, data_folder, kk, radius=100, direction=1,
             roi=(750, 850, 600, 800), ref_pixel=(70, 95),

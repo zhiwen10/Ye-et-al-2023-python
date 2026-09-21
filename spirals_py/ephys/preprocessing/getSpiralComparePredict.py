@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+from tqdm import tqdm
 
 from spirals_py.ephys.plots._prediction_example_utils import (
     _load_outline_mat,
@@ -10,6 +11,7 @@ from spirals_py.ephys.plots._prediction_example_utils import (
 from spirals_py.ephys.utils import get_session_info2
 from spirals_py.task.plots._task_helpers_s15 import matlab_round
 from spirals_py.utils.matio import load_mat_cell, load_mat_var, save_mat73
+from spirals_py.utils.paths import out_root, release_twin
 
 
 def _ismember_rows_int(A, B):
@@ -67,8 +69,8 @@ def _compare_sessions(T, data_folder, save_folder, predict_subfolder,
     save_folder.mkdir(parents=True, exist_ok=True)
     projectedAtlas1, _projectedTemplate1 = _load_outline_mat(data_folder)
 
-    raw_folder = data_folder / "ephys" / "spirals_raw_fftn"
-    predict_folder = data_folder / "ephys" / predict_subfolder
+    raw_folder = out_root() / "ephys" / "spirals_raw_fftn"
+    predict_folder = out_root() / "ephys" / predict_subfolder
     reg_folder = data_folder / "ephys" / "rf_tform"
     amp_folder = data_folder / "ephys" / "amplitude"
 
@@ -85,7 +87,7 @@ def _compare_sessions(T, data_folder, save_folder, predict_subfolder,
 
     left_all = []
     right_all = []
-    for kk in range(len(T)):
+    for kk in tqdm(range(len(T)), desc="getSpiralComparePredict"):
         ops = get_session_info2(T, kk, data_folder)
         fname = ops.fname
         try:
@@ -102,7 +104,10 @@ def _compare_sessions(T, data_folder, save_folder, predict_subfolder,
             continue
 
         archiveCell = load_mat_cell(
-            raw_folder / f"{fname}_spirals_group_fftn.mat", "archiveCell"
+            release_twin(
+                raw_folder / f"{fname}_spirals_group_fftn.mat", data_folder
+            ),
+            "archiveCell",
         ).ravel()
         spiral_length = np.array([np.asarray(c).shape[0] for c in archiveCell])
         spiral_sequence = archiveCell[spiral_length >= 2]
@@ -128,7 +133,8 @@ def _compare_sessions(T, data_folder, save_folder, predict_subfolder,
 
         # load spirals from prediction
         pwAll = load_mat_var(
-            predict_folder / f"{fname}_{predicted_suffix}", "pwAll"
+            release_twin(predict_folder / f"{fname}_{predicted_suffix}", data_folder),
+            "pwAll",
         )
         if pwAll.shape[0]:
             sx1, sy1 = _transform_points_forward(

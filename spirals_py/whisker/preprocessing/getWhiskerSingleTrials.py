@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import numpy as np
+from tqdm import tqdm
 
 from spirals_py.task.plots._task_helpers import imwarp, load_tform, loadUVt2_h5
 from spirals_py.task.preprocessing._task_utils import (
@@ -90,7 +91,7 @@ def getWhiskerSingleTrials(data_folder, save_folder):
     frames_post = np.arange(70, 85)
     n_trials = spiral_cell2.shape[0]
     spiral_large_count = np.zeros(n_trials)
-    for i in range(n_trials):
+    for i in tqdm(range(n_trials), desc="getWhiskerSingleTrials"):
         spiral_temp = np.vstack([spiral_cell2[i, k] for k in frames_post])
         spiral_large_count[i] = np.sum(spiral_temp[:, 2] >= 60)
     index = spiral_large_count >= 5

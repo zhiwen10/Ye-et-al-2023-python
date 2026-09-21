@@ -28,6 +28,7 @@ from matplotlib.widgets import PolygonSelector
 
 from spirals_py.utils.atlas import overlayOutlines
 from spirals_py.utils.io import load_outline_coords_h5
+from spirals_py.utils.paths import copy_release_twin, out_root, release_twin
 
 CENTER_MOP = (377, 428)  # MOp
 
@@ -72,7 +73,7 @@ def _interp_colors(x1, cmap_arr, v):
 def getMOroi(data_folder, save_folder):
     data_folder = Path(data_folder)
     save_folder = Path(save_folder)
-    out = save_folder / "MO_roi.mat"
+    out = copy_release_twin(save_folder / "MO_roi.mat", data_folder)
     if out.exists():
         print(f"getMOroi: {out} already exists, skipping")
         return
@@ -80,7 +81,12 @@ def getMOroi(data_folder, save_folder):
     coords = load_outline_coords_h5(
         data_folder / "tables" / "isocortex_horizontal_projection_outline.mat"
     )
-    T1 = pd.read_csv(data_folder / "Revision" / "axons" / "Axon_bias_all_cells_MO.csv")
+    T1 = pd.read_csv(
+        release_twin(
+            out_root() / "revision" / "axons" / "Axon_bias_all_cells_MO.csv",
+            data_folder,
+        )
+    )
 
     color2 = _colorcet_C06(180)
     scale1 = 15

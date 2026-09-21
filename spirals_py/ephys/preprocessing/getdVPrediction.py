@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+from tqdm import tqdm
 
 from spirals_py.ephys.preprocessing._regression import (
     get_variance_explained,
@@ -108,6 +109,6 @@ def getdVPrediction(T, data_folder, save_folder):
     data_folder = Path(data_folder)
     save_folder = Path(save_folder)
     save_folder.mkdir(parents=True, exist_ok=True)
-    for kk in range(len(T)):
+    for kk in tqdm(range(len(T)), desc="getdVPrediction"):
         fname = _dV_prediction_session(T, kk, data_folder, save_folder)
         print(f"getdVPrediction: {fname} ({kk + 1}/{len(T)})")

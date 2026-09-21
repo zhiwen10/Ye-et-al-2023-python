@@ -12,6 +12,7 @@ from spirals_py.task.preprocessing._task_utils import (
     density_color_plot2,
 )
 from spirals_py.task.preprocessing.combineSpiralsLR import combineSpiralsLR
+from spirals_py.utils.paths import out_root, release_twin
 
 
 def getCorrectSpiralPrePost(data_folder, save_folder):
@@ -37,8 +38,9 @@ def getCorrectSpiralPrePost(data_folder, save_folder):
     spirals_correct_post_all = []
 
     for mn in TASK_MICE:
-        sort_file = (
-            data_folder / "task" / "spirals" / f"{mn}_spirals_task_sort.mat"
+        sort_file = release_twin(
+            out_root() / "task" / "spirals" / f"{mn}_spirals_task_sort.mat",
+            data_folder,
         )
         spiral_correct_L = load_mat_cell(sort_file, "spiral_correct_L").ravel()
         spiral_correct_R = load_mat_cell(sort_file, "spiral_correct_R").ravel()

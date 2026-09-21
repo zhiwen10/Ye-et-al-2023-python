@@ -28,6 +28,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from spirals_py.axons.preprocessing._axon_utils import (
     getAxonSVD,
@@ -84,7 +85,7 @@ def _get_axon_bias_table(data_folder, all_label, axon_indx, center, layers=False
     soma_all2 = []
     axon_terminal_all2 = []
     labels_all = []
-    for k, iregion in enumerate(all_label):
+    for k, iregion in enumerate(tqdm(all_label, desc="getAxonBiasTable")):
         st_region_indx = getRegionIndex([iregion], st)
         cell_id = getCellPos(allCoords, av, st_region_indx)
         soma_all, axon_terminal_all = getAxonTerminal(

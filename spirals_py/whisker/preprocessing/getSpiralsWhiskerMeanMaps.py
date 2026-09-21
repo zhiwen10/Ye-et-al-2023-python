@@ -14,6 +14,7 @@ from spirals_py.spirals.preprocessing.spiral_detection import (
     getGroupingAlgorithm,
 )
 from spirals_py.utils.matio import load_mat_var, save_mat73
+from spirals_py.utils.paths import copy_release_twin, release_twin
 
 from ._whisker_utils import _bandpass_phase, _colorcet_c06, _imresize
 
@@ -127,7 +128,10 @@ def getSpiralsWhiskerMeanMaps(data_folder, save_folder):
     save_folder = Path(save_folder)
     save_folder.mkdir(parents=True, exist_ok=True)
 
-    wf_mean2 = load_mat_var(save_folder / "whisker_spirals_mean_all.mat", "wf_mean2")
+    wf_mean2 = load_mat_var(
+        release_twin(save_folder / "whisker_spirals_mean_all.mat", data_folder),
+        "wf_mean2",
+    )
     wf_mean3 = _imresize(wf_mean2, (660, 570))
 
     _, tracePhase = _bandpass_phase(wf_mean3)
@@ -135,7 +139,9 @@ def getSpiralsWhiskerMeanMaps(data_folder, save_folder):
         tracePhase.shape[2], tracePhase.shape[0], tracePhase.shape[1]
     )
 
-    roi_path = save_folder / "whisker_evoked_map_roi.mat"
+    roi_path = copy_release_twin(
+        save_folder / "whisker_evoked_map_roi.mat", data_folder
+    )
     if roi_path.exists():
         roi = _load_roi_vertices(roi_path)
     else:

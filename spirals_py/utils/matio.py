@@ -38,8 +38,17 @@ _HDF5_SIGNATURE = b"\x89HDF\r\n\x1a\n"
 
 
 def is_v73(path):
-    """True if *path* is a MATLAB v7.3 (HDF5) .mat file."""
+    """True if *path* is a MATLAB v7.3 (HDF5) .mat file.
+
+    Genuine MATLAB v7.3 files start with a 512-byte user block ("MATLAB
+    7.3 MAT-file...") with the HDF5 signature at offset 512; files
+    written by h5py carry the signature at offset 0.
+    """
     with open(path, "rb") as fh:
+        head = fh.read(8)
+        if head == _HDF5_SIGNATURE:
+            return True
+        fh.seek(512)
         return fh.read(8) == _HDF5_SIGNATURE
 
 
@@ -228,6 +237,16 @@ def _read_ref(f, r):
             out[idx] = _read_ref(f, refs[idx[::-1]])
         return out
     cls = d.attrs.get("MATLAB_class", b"")
+    if d.attrs.get("MATLAB_empty", 0) or (
+        cls == b"double" and d.dtype == np.uint64 and d.ndim == 1
+    ):
+        # MATLAB stores an empty array as a dataset holding its dimension
+        # vector (uint64), e.g. [0 5] for zeros(0, 5); some release files
+        # omit the MATLAB_empty attribute, so the uint64-dim-vector shape
+        # of a claimed double is detected structurally
+        if cls == b"char":
+            return ""
+        return np.zeros(tuple(int(v) for v in np.asarray(d).ravel()))
     if cls == b"char":
         return _char_to_str(np.asarray(d).T)
     return np.asarray(d).T

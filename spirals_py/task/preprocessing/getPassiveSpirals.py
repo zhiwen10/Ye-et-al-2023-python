@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+from tqdm import tqdm
 
 from spirals_py.task.plots._task_helpers_s15 import (
     load_block,
@@ -48,7 +49,7 @@ def getPassiveSpirals(data_folder, save_folder):
     for mn in TASK_MICE:
         T1 = load_task_sessions(data_folder, mn, label="passive")
         spiral_rows = []
-        for kk in range(len(T1)):
+        for kk in tqdm(range(len(T1)), desc="getPassiveSpirals"):
             fname, session_root = session_dirs(data_folder, T1, kk)
             _, _, t, _ = loadUVt2_h5(session_root)
             block = load_block(session_root)

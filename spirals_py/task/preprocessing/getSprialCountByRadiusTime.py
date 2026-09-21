@@ -8,6 +8,7 @@ from spirals_py.task.preprocessing._task_io import (
     save_mat73,
 )
 from spirals_py.task.preprocessing._task_utils import TASK_MICE
+from spirals_py.utils.paths import out_root, release_twin
 
 
 def getSprialCountByRadiusTime(data_folder, save_folder):
@@ -33,8 +34,9 @@ def getSprialCountByRadiusTime(data_folder, save_folder):
 
     for label_id, label in enumerate(labels):
         for i, mn in enumerate(TASK_MICE):
-            sort_file = (
-                data_folder / "task" / "spirals" / f"{mn}_spirals_task_sort.mat"
+            sort_file = release_twin(
+                out_root() / "task" / "spirals" / f"{mn}_spirals_task_sort.mat",
+                data_folder,
             )
             spiral_all = load_mat_cell(sort_file, "spiral_all")
             T_all = load_mat_table(sort_file, "T_all")

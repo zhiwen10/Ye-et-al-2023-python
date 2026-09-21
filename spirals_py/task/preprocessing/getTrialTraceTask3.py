@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 from scipy.signal import butter, filtfilt, hilbert
+from tqdm import tqdm
 
 from spirals_py.task.plots._task_helpers import imwarp, loadUVt2_h5, load_tform
 from spirals_py.task.plots._task_helpers_s15 import (
@@ -46,7 +47,7 @@ def getTrialTraceTask3(data_folder, T1, win, trialWin, freq):
 
     wf_all, filt_all, phase_all, amp_all, contrast_all = [], [], [], [], []
 
-    for kk in range(len(T1)):
+    for kk in tqdm(range(len(T1)), desc="getTrialTraceTask3"):
         fname, session_root = session_dirs(data_folder, T1, kk)
         U, V, t, mimg = loadUVt2_h5(session_root)  # load U, V, t
         block = load_block(session_root)

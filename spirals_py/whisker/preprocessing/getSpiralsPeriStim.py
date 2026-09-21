@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import numpy as np
+from tqdm import tqdm
 
 from spirals_py.task.plots._task_helpers import load_tform, loadUVt2_h5
 from spirals_py.task.preprocessing._task_utils import (
@@ -56,7 +57,7 @@ def getSpiralsPeriStim(data_folder, save_folder):
 
     spiral_count_sum_left = np.zeros((len(T), 7, 71))
     spiral_count_sum_right = np.zeros((len(T), 7, 71))
-    for kk in range(len(T)):
+    for kk in tqdm(range(len(T)), desc="getSpiralsPeriStim"):
         fname, session_root = whisker_session_dirs(data_folder, T, kk)
         _, _, t, _ = loadUVt2_h5(session_root)
         flipsUp = load_whisker_flipsUp(session_root)

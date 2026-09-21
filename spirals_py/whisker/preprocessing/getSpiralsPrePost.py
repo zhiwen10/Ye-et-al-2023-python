@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import numpy as np
+from tqdm import tqdm
 
 from spirals_py.task.plots._task_helpers import load_tform, loadUVt2_h5
 from spirals_py.task.preprocessing._task_utils import (
@@ -62,7 +63,7 @@ def getSpiralsPrePost(data_folder, save_folder):
 
     spirals_pre_cell = np.empty((len(T), 1), dtype=object)
     spirals_post_cell = np.empty((len(T), 1), dtype=object)
-    for kk in range(len(T)):
+    for kk in tqdm(range(len(T)), desc="getSpiralsPrePost"):
         fname, session_root = whisker_session_dirs(data_folder, T, kk)
         _, _, t, _ = loadUVt2_h5(session_root)
         flipsUp = load_whisker_flipsUp(session_root)

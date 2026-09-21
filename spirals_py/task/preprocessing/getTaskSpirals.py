@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+from tqdm import tqdm
 
 from spirals_py.task.plots._task_helpers import loadUVt2_h5, load_tform
 from spirals_py.task.plots._task_helpers_s15 import (
@@ -21,6 +22,7 @@ from spirals_py.task.preprocessing._task_utils import (
     transformPointsForward,
 )
 from spirals_py.task.preprocessing.getConcatTrials import getConcatTrials
+from spirals_py.utils.paths import out_root, release_twin
 
 
 def getTaskSpirals(data_folder, save_folder):
@@ -50,7 +52,7 @@ def getTaskSpirals(data_folder, save_folder):
     for mn in TASK_MICE:
         T1 = load_task_sessions(data_folder, mn)
         spiral_rows = []
-        for kk in range(len(T1)):
+        for kk in tqdm(range(len(T1)), desc="getTaskSpirals"):
             fname, session_root = session_dirs(data_folder, T1, kk)
             _, _, t, _ = loadUVt2_h5(session_root)
             block = load_block(session_root)
@@ -97,7 +99,11 @@ def getTaskSpirals(data_folder, save_folder):
         spiral_all = np.vstack(spiral_rows)
 
         T_all = load_mat_table(
-            data_folder / "task" / "task_outcome" / f"{mn}_task_outcome.mat", "T_all"
+            release_twin(
+                out_root() / "task" / "task_outcome" / f"{mn}_task_outcome.mat",
+                data_folder,
+            ),
+            "T_all",
         )
 
         left = T_all.left_contrast.to_numpy()

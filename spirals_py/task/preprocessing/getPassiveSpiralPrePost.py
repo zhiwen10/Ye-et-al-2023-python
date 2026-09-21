@@ -13,6 +13,7 @@ from spirals_py.task.preprocessing._task_utils import (
 )
 from spirals_py.task.preprocessing.combineSpiralsLR import combineSpiralsLR
 from spirals_py.task.preprocessing.getConcatTrials import getConcatTrials
+from spirals_py.utils.paths import out_root, release_twin
 
 
 def getPassiveSpiralPrePost(data_folder, save_folder):
@@ -38,8 +39,9 @@ def getPassiveSpiralPrePost(data_folder, save_folder):
     spirals_high_post_all = []
 
     for mn in TASK_MICE:
-        sort_file = (
-            data_folder / "task" / "spirals" / f"{mn}_spirals_passive_sort.mat"
+        sort_file = release_twin(
+            out_root() / "task" / "spirals" / f"{mn}_spirals_passive_sort.mat",
+            data_folder,
         )
         spiral_high_stimL = load_mat_cell(sort_file, "spiral_high_stimL")
         spiral_high_stimR = load_mat_cell(sort_file, "spiral_high_stimR")

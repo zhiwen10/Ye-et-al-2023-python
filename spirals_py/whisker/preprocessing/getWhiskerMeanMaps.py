@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import numpy as np
+from tqdm import tqdm
 
 from spirals_py.task.plots._task_helpers import imwarp, load_tform, loadUVt2_h5
 from spirals_py.utils.matio import save_mat73
@@ -43,7 +44,7 @@ def getWhiskerMeanMaps(data_folder, save_folder):
     T = load_whisker_table(data_folder)
 
     wf_mean_all = None
-    for kk in range(len(T)):
+    for kk in tqdm(range(len(T)), desc="getWhiskerMeanMaps"):
         fname, session_root = whisker_session_dirs(data_folder, T, kk)
         U, V, t, mimg = loadUVt2_h5(session_root)
         dV = np.hstack([np.zeros((V.shape[0], 1)), np.diff(V, axis=1)])

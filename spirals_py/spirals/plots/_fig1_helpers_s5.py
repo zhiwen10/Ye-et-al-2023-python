@@ -51,12 +51,23 @@ def _session_info(T, kk):
 
 
 def _load_spirals_grouping(path, min_duration=1):
-    """Load archiveCell from a *_spirals_group_fftn.mat file (v7.3).
+    """Load archiveCell from a *_spirals_group_fftn.mat file (v7.3 or v5).
 
     Returns (cells, durations): the cell matrices with duration >=
     min_duration in MATLAB (n, 5) orientation [x y r dir frame], and the
     durations of all cells.
     """
+    from spirals_py.utils.matio import is_v73
+
+    if not is_v73(path):
+        # v5 files (e.g. the whisker release grouping archives) store the
+        # cell directly in scipy-readable form
+        from spirals_py.utils.matio import load_mat_cell
+
+        arr = load_mat_cell(path, "archiveCell").ravel()
+        durations = np.array([np.size(c, 0) for c in arr], dtype=int)
+        cells = [np.atleast_2d(c) for c in arr[durations >= min_duration]]
+        return cells, durations
     with h5py.File(path, "r") as f:
         refs = f["archiveCell"][()].ravel()
         durations = np.empty(refs.size, dtype=int)

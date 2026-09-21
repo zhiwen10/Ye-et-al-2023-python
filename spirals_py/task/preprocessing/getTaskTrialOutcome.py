@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from tqdm import tqdm
+
 from spirals_py.task.preprocessing._task_io import save_mat
 from spirals_py.task.preprocessing._task_utils import TASK_MICE, load_task_sessions
 from spirals_py.task.preprocessing.getTrialID import getTrialID
@@ -21,7 +23,7 @@ def getTaskTrialOutcome(data_folder, save_folder):
     save_folder = Path(save_folder)
     save_folder.mkdir(parents=True, exist_ok=True)
 
-    for mn in TASK_MICE:
+    for mn in tqdm(TASK_MICE, desc="getTaskTrialOutcome"):
         T1 = load_task_sessions(data_folder, mn)
         T_all = getTrialResult(T1, data_folder)
         save_mat(save_folder / f"{mn}_task_outcome.mat", {"T_all": T_all})

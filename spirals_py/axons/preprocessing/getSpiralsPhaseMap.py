@@ -24,6 +24,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from spirals_py.spirals.plots._fig1_helpers_s1 import _imwarp_row, _load_tform
 from spirals_py.spirals.preprocessing.spiralPhaseMap_freq import spiralPhaseMap4
@@ -124,7 +125,7 @@ def getSpiralsPhaseMap(T, data_folder, save_folder):
     save_folder = Path(save_folder)
     save_folder.mkdir(parents=True, exist_ok=True)
 
-    for kk in range(15):
+    for kk in tqdm(range(15), desc="getSpiralsPhaseMap"):
         fname, spiral_phase_all_norm = _session_phase_maps(
             T, data_folder, kk, radius=70, direction=1,
             roi=(800, 900, 500, 650), ref_pixel=(70, 95),

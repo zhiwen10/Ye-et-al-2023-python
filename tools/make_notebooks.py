@@ -353,7 +353,44 @@ def pipeline_cell(func, comment=None, extra="", args=None, import_path=TP):
     return src
 
 
-SPIRALS_SAVE = 'save_folder = DATA_FOLDER / "task" / "spirals"'
+# cells whose function runs spiral detection (slow); tagged so
+# tools/run_pipeline.py can skip them (release outputs are used instead)
+DETECTION_FUNCS = {
+    "getSpiralDetection",
+    "getSpiralDetectionFftnRaw",
+    "getSpiralDetectionFftnPermute",
+    "getSpiralsFFTnFreq",
+    "getSpiralsRaw",
+    "getSpiralsPrediction",
+    "getSpiralsPredictionPermute",
+    "getSpiralsWhiskerMeanMaps",
+}
+
+
+def pipeline_code_cell(func, comment=None, extra="", args=None, import_path=TP):
+    cell = nbf.v4.new_code_cell(pipeline_cell(func, comment, extra, args, import_path))
+    if func in DETECTION_FUNCS:
+        cell.metadata["tags"] = ["detection"]
+    return cell
+
+
+PIPELINE_SETUP_TAIL = (
+    "DATA_FOLDER = Path(r\"D:\\\\data\")  # MATLAB data release (inputs, read-only)\n"
+    "OUT_FOLDER = out_root()  # python outputs (D:\\\\data_python)\n"
+)
+
+
+def pipeline_setup(table=None, comment=""):
+    src = "from pathlib import Path\n\nfrom spirals_py.utils.paths import out_root\n\n"
+    if table:
+        src += "import pandas as pd\n\n"
+    src += PIPELINE_SETUP_TAIL
+    if table:
+        src += f"\n# load {comment}\nT = pd.read_{table}\n"
+    return src
+
+
+SPIRALS_SAVE = 'save_folder = OUT_FOLDER / "task" / "spirals"'
 
 
 def make_pipeline6():
@@ -365,23 +402,22 @@ def make_pipeline6():
         "(spirals): task preprocessing pipeline. Regenerates every `task/*.mat` file "
         "consumed by `notebooks/figure6_task.ipynb` from the raw data release.\n\n"
         "No figures are produced; progress is printed per mouse/session."))
-    nbc.append(nbf.v4.new_code_cell(
-        '# pipeline task\nfrom pathlib import Path\n\nDATA_FOLDER = Path(r"D:\\data")'))
+    nbc.append(nbf.v4.new_code_cell(pipeline_setup()))
     sections = [
         ("get psychometric curve and trial outcome", [
             ("getPsychometricCurve",
-             'save_folder = DATA_FOLDER / "task" / "psychometric_curve"',
+             'save_folder = OUT_FOLDER / "task" / "psychometric_curve"',
              "get psychometric curves for all subjects"),
             ("getTaskTrialOutcome",
-             'save_folder = DATA_FOLDER / "task" / "task_outcome"',
+             'save_folder = OUT_FOLDER / "task" / "task_outcome"',
              "get task trial outcome for each trial"),
         ]),
         ("get mean maps for different trial types", [
             ("getMeanMapSession",
-             'save_folder = DATA_FOLDER / "task" / "task_mean_maps"',
+             'save_folder = OUT_FOLDER / "task" / "task_mean_maps"',
              "get mean map for all contrast and trial types across sessions"),
             ("getMeanMapsAll",
-             'save_folder = DATA_FOLDER / "task" / "task_mean_maps"',
+             'save_folder = OUT_FOLDER / "task" / "task_mean_maps"',
              "average mean maps at [-2,2]s around stim onset for 3 trial types"),
         ]),
         ("get spirals for different trial types", [
@@ -412,8 +448,7 @@ def make_pipeline6():
         nbc.append(nbf.v4.new_markdown_cell(f"## {header}"))
         for entry in entries:
             func, extra, comment, *args = entry
-            nbc.append(nbf.v4.new_code_cell(
-                pipeline_cell(func, comment, extra, args[0] if args else None)))
+            nbc.append(pipeline_code_cell(func, comment, extra, args[0] if args else None))
     nbf.write(nb, NB / "pipeline6_task.ipynb")
     return "pipeline6_task.ipynb"
 
@@ -422,6 +457,150 @@ AP = "spirals_py.axons.preprocessing"
 SMP = "spirals_py.spirals_mirror.preprocessing"
 EP = "spirals_py.ephys.preprocessing"
 WP = "spirals_py.whisker.preprocessing"
+SP = "spirals_py.spirals.preprocessing"
+
+
+def make_pipeline1():
+    """notebooks/pipeline1_spirals.ipynb, mirroring pipeline1_spirals.m."""
+    nb = nbf.v4.new_notebook(metadata=KERNEL)
+    nbc = nb.cells
+    nbc.append(nbf.v4.new_markdown_cell(
+        "# pipeline1_spirals\n\nPython translation of `pipeline1_spirals.m` from Ye et al. 2023 "
+        "(spirals): spiral-wave preprocessing pipeline. Regenerates every `spirals/*.mat` and "
+        "spirals CSV file consumed by `notebooks/figure1_spirals.ipynb` from the raw data "
+        "release.\n\nCells tagged `detection` run the (slow) spiral detection itself "
+        "(~1 h/session) and are skipped by `tools/run_pipeline.py` unless `--run-detection` "
+        "is given; downstream steps then fall back to the release detection outputs. "
+        "No figures are produced; progress bars show per-session progress."))
+    nbc.append(nbf.v4.new_code_cell(
+        pipeline_setup(r'excel(DATA_FOLDER / "tables" / "spiralSessions3.xlsx")',
+                       "session table")))
+    sections = [
+        ("spiral detection algorithm", [
+            ("getSpiralDetection",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_raw"',
+             "run time estimate: 1h for each session"),
+        ]),
+        ("spatiotemporal clustering of spirals", [
+            ("getSpiralGrouping",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_grouping"',
+             "group spirals by spatiotemporal proximity"),
+        ]),
+        ("Figure 1d", [
+            ("getSpiralGroupingScrambled",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_scrambled"',
+             "spirals grouping in frame scrambled data, 10x"),
+            ("getSpiralDurationRatio",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_duration"',
+             "ratio calculation"),
+        ]),
+        ("Figure 1e, Extended Data Fig.7c,d", [
+            ("getSpiralDensityMap",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_density"',
+             "calculate spiral density"),
+            ("getSpiralsDensityLine",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_density"',
+             "calculate spiral density lines"),
+        ]),
+        ("Extended Data Fig.1c,d,e,f, revision", [
+            ("getTaperPowerMap3",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_power_spectrum2"',
+             "calculate tapered power spectrum"),
+            ("getExamplePixelTrace_005_8Hz",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_power_spectrum2"',
+             None),
+            ("getPowerBandRatio",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_power_spectrum2"',
+             None),
+            ("setAlphaThreshold",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_power_spectrum2"',
+             None),
+        ]),
+        ("Extended Data Fig.3", [
+            ("getSpiralDetectionFftnRaw",
+             'freq = [2, 8]\nlabel1 = "control"\nlabel2 = "fftn"\n\n'
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_fftn"',
+             "spiral detection in raw data"),
+            ("getSpiralDetectionFftnPermute", None,
+             "spiral detection in fftn data"),
+            ("getFFTNSpiralsMap",
+             'freq = [2, 8]\nlabel1 = "control"\nlabel2 = "fftn"\n\n'
+             '# variables also defined in the (skippable) detection cell above\n'
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_fftn"',
+             "spiral maps in raw data",
+             "T, freq, label1, DATA_FOLDER, save_folder"),
+            ("getFFTNSpiralsStats",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_fftn"',
+             "spiral stats in raw data",
+             "T, freq, label1, DATA_FOLDER, save_folder"),
+            ("getFFTNSpiralsMap",
+             None, "spiral maps in fftn data",
+             "T, freq, label2, DATA_FOLDER, save_folder"),
+            ("getFFTNSpiralsStats",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_fftn"',
+             "spiral stats in fftn data",
+             "T, freq, label2, DATA_FOLDER, save_folder"),
+        ]),
+        ("Extended Data Fig.3 revision: different frequency bands", [
+            ("getSpiralsGroup_freq",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_freq" / "spirals_fftn"',
+             None),
+            ("getSpiralsScrambled_freq",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_freq" / "spirals_scrambled"',
+             None),
+            ("getDurationFreq",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_freq" / "spirals_duration"',
+             None),
+            ("getSpiralDensityLine_all",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_freq" / "spirals_density_line"',
+             None),
+            ("getSpiralsFFTnFreq",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_fftn"',
+             "fftn detection chains the slow detection drivers"),
+        ]),
+        ("Extended Data Fig.6", [
+            ("getSpiralDensityByDuration",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_density_duration"',
+             "spiral maps across durations"),
+            ("getSpiralDensityByRadius",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_density_radius"',
+             "spiral maps across radius"),
+        ]),
+        ("Extended Data Fig.8", [
+            ("getMotionEnergyIndex",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_index"',
+             "bin spirality index based on motion energy",
+             "DATA_FOLDER, save_folder"),
+            ("getAmpIndex", None,
+             "bin spirality index based on 2-8Hz amplitude",
+             "DATA_FOLDER, save_folder"),
+        ]),
+        ("Extended Data Fig.9", [
+            ("getSpiralSpeed",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_speed"',
+             "calculate spiral speed for each session"),
+            ("getSpiralSpeedConcat",
+             'save_folder = OUT_FOLDER / "spirals" / "spirals_speed"',
+             "sort spiral speed based on radius for each session"),
+            ("getSpeedForRadius",
+             'radius = 50\nsave_folder = OUT_FOLDER / "spirals" / "spirals_speed"',
+             "get speed for all spirals with radius of 50 pixels",
+             "T, radius, DATA_FOLDER, save_folder"),
+            ("getSpeedForRadius",
+             'radius = 100\nsave_folder = OUT_FOLDER / "spirals" / "spirals_speed"',
+             "get speed for all spirals with radius of 100 pixels",
+             "T, radius, DATA_FOLDER, save_folder"),
+        ]),
+    ]
+    for header, entries in sections:
+        nbc.append(nbf.v4.new_markdown_cell(f"## {header}"))
+        for entry in entries:
+            func, extra, comment, *args = entry
+            nbc.append(pipeline_code_cell(
+                func, comment, extra,
+                args[0] if args else "T, DATA_FOLDER, save_folder", SP))
+    nbf.write(nb, NB / "pipeline1_spirals.ipynb")
+    return "pipeline1_spirals.ipynb"
 
 
 def make_pipeline2():
@@ -434,37 +613,43 @@ def make_pipeline2():
         "and `revision/axons/*.csv` file consumed by `notebooks/figure2_axons.ipynb` from "
         "the raw data release.\n\nNo figures are produced; progress is printed per session."))
     nbc.append(nbf.v4.new_code_cell(
-        '# pipeline axons\nfrom pathlib import Path\n\nimport pandas as pd\n\n'
-        'DATA_FOLDER = Path(r"D:\\data")\n\n'
-        '# load session table\nT = pd.read_excel(DATA_FOLDER / "tables" / "spiralSessions3.xlsx")'))
+        pipeline_setup(r'excel(DATA_FOLDER / "tables" / "spiralSessions3.xlsx")',
+                       "session table")))
     sections = [
         ("Figure 2c,e", [
             ("getAxonBiasTable",
-             'save_folder = DATA_FOLDER / "axons"',
+             'save_folder = OUT_FOLDER / "axons"',
              "extract soma and axon info for the 435 sensory neurons"),
         ]),
         ("Figure 2d,f", [
             ("getSpiralsPhaseMap",
-             'save_folder = DATA_FOLDER / "axons" / "spirals_70pixels_mean_flow_left"',
+             'save_folder = OUT_FOLDER / "axons" / "spirals_70pixels_mean_flow_left"',
              "save spirals phase maps for all sessions",
              "T, DATA_FOLDER, save_folder", AP),
-            ("getSpiralsPhaseMapLeft", None, None,
+            ("getSpiralsPhaseMapLeft",
+             'save_folder = OUT_FOLDER / "axons" / "spirals_70pixels_mean_flow_left"',
+             None,
              "T, DATA_FOLDER, save_folder", AP),
         ]),
         ("axons revision", [
             ("getAxonBiasTableMO",
-             'save_folder = DATA_FOLDER / "revision" / "axons"',
+             'save_folder = OUT_FOLDER / "revision" / "axons"',
              "get table for all cells in left hemisphere",
              "DATA_FOLDER, save_folder", AP),
-            ("getAxonBiasTableMO2", None, "get table for all MO cells",
+            ("getAxonBiasTableMO2",
+             'save_folder = OUT_FOLDER / "revision" / "axons"',
+             "get table for all MO cells",
              "DATA_FOLDER, save_folder", AP),
-            ("getMOroi", None,
+            ("getMOroi",
+             'save_folder = OUT_FOLDER / "revision" / "axons"',
              "draw MO ROI (interactive polygon on first run; MO_roi.mat is cached)",
              "DATA_FOLDER, save_folder", AP),
-            ("getAxonBiasTableSSp2", None, None,
+            ("getAxonBiasTableSSp2",
+             'save_folder = OUT_FOLDER / "revision" / "axons"',
+             None,
              "DATA_FOLDER, save_folder", AP),
             ("getSpiralsPhaseMap2",
-             'save_folder = DATA_FOLDER / "axons" / "spirals_100pixels_mean_flow"',
+             'save_folder = OUT_FOLDER / "axons" / "spirals_100pixels_mean_flow"',
              "save spirals phase maps for all sessions",
              "T, DATA_FOLDER, save_folder", AP),
         ]),
@@ -474,8 +659,7 @@ def make_pipeline2():
         for entry in entries:
             func, extra, comment, *rest = entry
             args, import_path = rest if rest else ("DATA_FOLDER, save_folder", AP)
-            nbc.append(nbf.v4.new_code_cell(
-                pipeline_cell(func, comment, extra, args, import_path)))
+            nbc.append(pipeline_code_cell(func, comment, extra, args, import_path))
     nbf.write(nb, NB / "pipeline2_axons.ipynb")
     return "pipeline2_axons.ipynb"
 
@@ -490,39 +674,42 @@ def make_pipeline3():
         "every `spirals_mirror/*.mat` file consumed by `notebooks/figure3_sprials_mirror.ipynb` "
         "from the raw data release.\n\nNo figures are produced; progress is printed per session."))
     nbc.append(nbf.v4.new_code_cell(
-        '# pipeline spirals mirror\nfrom pathlib import Path\n\nimport pandas as pd\n\n'
-        'DATA_FOLDER = Path(r"D:\\data")\n\n'
-        '# load session table\nT = pd.read_excel(DATA_FOLDER / "tables" / "spiralSessions3.xlsx")'))
+        pipeline_setup(r'excel(DATA_FOLDER / "tables" / "spiralSessions3.xlsx")',
+                       "session table")))
     sections = [
         ("Figure 3c", [
             ("getReducedRankRegressionAP",
-             'save_folder = DATA_FOLDER / "spirals_mirror" / "regression_ap"',
+             'save_folder = OUT_FOLDER / "spirals_mirror" / "regression_ap"',
              "save regression coeffs, kernels and R2 from AP regression"),
             ("getReducedRankRegressionHEMI",
-             'save_folder = DATA_FOLDER / "spirals_mirror" / "regression_hemi"',
+             'save_folder = OUT_FOLDER / "spirals_mirror" / "regression_hemi"',
              "save regression coeffs, kernels and R2 from hemi regression"),
         ]),
         ("Figure 3h-k", [
             ("getExampleKernelAP",
-             'save_folder = DATA_FOLDER / "spirals_mirror" / "matching_index"',
+             'save_folder = OUT_FOLDER / "spirals_mirror" / "matching_index"',
              "save kernel maps for example 8 pixels, AP",
              "T, DATA_FOLDER, save_folder"),
-            ("getExampleKernelHEMI", None,
+            ("getExampleKernelHEMI",
+             'save_folder = OUT_FOLDER / "spirals_mirror" / "matching_index"',
              "save kernel maps for example 8 pixels, hemi",
              "T, DATA_FOLDER, save_folder"),
-            ("getAxonMapAP", None,
+            ("getAxonMapAP",
+             'save_folder = OUT_FOLDER / "spirals_mirror" / "matching_index"',
              "get axon projection maps in the anterior cortex (MO)",
              "DATA_FOLDER, save_folder"),
-            ("getAxonMapHEMI", None,
+            ("getAxonMapHEMI",
+             'save_folder = OUT_FOLDER / "spirals_mirror" / "matching_index"',
              "get axon projection maps in the left hemisphere",
              "DATA_FOLDER, save_folder"),
-            ("getAxonMapInjection", None,
+            ("getAxonMapInjection",
+             'save_folder = OUT_FOLDER / "spirals_mirror" / "matching_index"',
              "get viral injection maps in the sensory cortex",
              "DATA_FOLDER, save_folder"),
         ]),
         ("Extended Data Fig.11", [
             ("getMapsSession",
-             'save_folder = DATA_FOLDER / "spirals_mirror" / "regression_kernels"',
+             'save_folder = OUT_FOLDER / "spirals_mirror" / "regression_kernels"',
              "get 8 example kernels for all 15 sessions",
              "T, DATA_FOLDER, save_folder"),
         ]),
@@ -531,9 +718,8 @@ def make_pipeline3():
         nbc.append(nbf.v4.new_markdown_cell(f"## {header}"))
         for entry in entries:
             func, extra, comment, *args = entry
-            nbc.append(nbf.v4.new_code_cell(
-                pipeline_cell(func, comment, extra,
-                              args[0] if args else "T, DATA_FOLDER, save_folder", SMP)))
+            nbc.append(pipeline_code_cell(func, comment, extra,
+                              args[0] if args else "T, DATA_FOLDER, save_folder", SMP))
     nbf.write(nb, NB / "pipeline3_spirals_mirror.ipynb")
     return "pipeline3_spirals_mirror.ipynb"
 
@@ -548,57 +734,55 @@ def make_pipeline4():
         "file consumed by `notebooks/figure4_ephys.ipynb` from the raw data release.\n\n"
         "No figures are produced; progress is printed per session."))
     nbc.append(nbf.v4.new_code_cell(
-        '# pipeline ephys\nfrom pathlib import Path\n\nimport pandas as pd\n\n'
-        'DATA_FOLDER = Path(r"D:\\data")\n\n'
-        '# load widefield + ephys session table\n'
-        'T = pd.read_csv(DATA_FOLDER / "tables" / "spirals_ephys_sessions_new2.csv")'))
+        pipeline_setup(r'csv(DATA_FOLDER / "tables" / "spirals_ephys_sessions_new2.csv")',
+                       "widefield + ephys session table")))
     sections = [
         ("Figure 4g", [
             ("getdVPrediction",
-             'save_folder = DATA_FOLDER / "ephys" / "dv_prediction"',
+             'save_folder = OUT_FOLDER / "ephys" / "dv_prediction"',
              "predict dV from spiking data, cross validated"),
             ("getdVPredictionPermute",
-             'save_folder = DATA_FOLDER / "ephys" / "dv_permute"',
+             'save_folder = OUT_FOLDER / "ephys" / "dv_permute"',
              "predict dV from spiking data, shuffled"),
             ("getEphysROI",
-             'save_folder = DATA_FOLDER / "ephys" / "roi"',
+             'save_folder = OUT_FOLDER / "ephys" / "roi"',
              "draw brain ROI (interactive polygon per session on first run; "
              "<fname>_roi.mat is cached and skipped afterwards)"),
             ("getSpiralsRaw",
-             'save_folder = DATA_FOLDER / "ephys" / "spirals_raw"',
+             'save_folder = OUT_FOLDER / "ephys" / "spirals_raw"',
              "detect widefield spirals within the brain ROI"),
             ("getEphysSpiralsGrouping",
-             'save_folder = DATA_FOLDER / "ephys" / "spirals_raw_fftn"',
+             'save_folder = OUT_FOLDER / "ephys" / "spirals_raw_fftn"',
              "group spirals based on spatiotemporal structure"),
             ("getSpiralsPrediction",
-             'save_folder = DATA_FOLDER / "ephys" / "spirals_predict"',
+             'save_folder = OUT_FOLDER / "ephys" / "spirals_predict"',
              "detect spirals in predicted data, no need to group"),
             ("getSpiralsPredictionPermute",
-             'save_folder = DATA_FOLDER / "ephys" / "spirals_predict_permute"',
+             'save_folder = OUT_FOLDER / "ephys" / "spirals_predict_permute"',
              "detect spirals in permuted predictions (no MATLAB counterpart; "
              "consumed by getSpiralComparePermute)"),
             ("getSpiralComparePredict",
-             'save_folder = DATA_FOLDER / "ephys" / "spirals_compare"',
+             'save_folder = OUT_FOLDER / "ephys" / "spirals_compare"',
              "assess spiral pairs in raw and predicted data"),
-            ("getSpiralComparePermute", None,
+            ("getSpiralComparePermute",
+             'save_folder = OUT_FOLDER / "ephys" / "spirals_compare"',
              "assess spiral pairs in raw and permuted data"),
         ]),
         ("Figure 4h,i", [
             ("getPhaseFlowMatchingIndex",
-             'save_folder = DATA_FOLDER / "ephys" / "flow_var"',
+             'save_folder = OUT_FOLDER / "ephys" / "flow_var"',
              "get matching index for phase and flow"),
         ]),
         ("Extended Data Fig.13d", [
             ("getVarOrderedByNeuron",
-             'save_folder = DATA_FOLDER / "ephys" / "var_ordered"',
+             'save_folder = OUT_FOLDER / "ephys" / "var_ordered"',
              "sort variance explained by neuron contribution"),
         ]),
     ]
     for header, entries in sections:
         nbc.append(nbf.v4.new_markdown_cell(f"## {header}"))
         for func, extra, comment in entries:
-            nbc.append(nbf.v4.new_code_cell(
-                pipeline_cell(func, comment, extra, "T, DATA_FOLDER, save_folder", EP)))
+            nbc.append(pipeline_code_cell(func, comment, extra, "T, DATA_FOLDER, save_folder", EP))
     nbf.write(nb, NB / "pipeline4_ephys.ipynb")
     return "pipeline4_ephys.ipynb"
 
@@ -612,35 +796,35 @@ def make_pipeline5():
         "(spirals): whisker-stimulus preprocessing pipeline. Regenerates every `whisker/*.mat` "
         "file consumed by `notebooks/figure5_whisker.ipynb` from the raw data release.\n\n"
         "No figures are produced; progress is printed per mouse/session."))
-    nbc.append(nbf.v4.new_code_cell(
-        '# pipeline whisker\nfrom pathlib import Path\n\nDATA_FOLDER = Path(r"D:\\data")'))
+    nbc.append(nbf.v4.new_code_cell(pipeline_setup()))
     sections = [
         ("whisker mean maps", [
             ("getWhiskerMeanMaps",
-             'save_folder = DATA_FOLDER / "whisker" / "whisker_mean_maps"',
+             'save_folder = OUT_FOLDER / "whisker" / "whisker_mean_maps"',
              "get whisker mean maps across 5 mice"),
-            ("getSpiralsWhiskerMeanMaps", None,
+            ("getSpiralsWhiskerMeanMaps",
+             'save_folder = OUT_FOLDER / "whisker" / "whisker_mean_maps"',
              "detect spirals from mean maps (brain-mask ROI drawn interactively on "
              "first run and cached to file)"),
         ]),
         ("spirals peri stim", [
             ("getSpiralsPrePost",
-             'save_folder = DATA_FOLDER / "whisker" / "spirals_peri_stim"',
-             "concatenate spirals pre and post stimulus"),
-            ("getSpiralsPeriStim", None,
+              'save_folder = OUT_FOLDER / "whisker" / "spirals_peri_stim"',
+              "concatenate spirals pre and post stimulus"),
+            ("getSpiralsPeriStim",
+             'save_folder = OUT_FOLDER / "whisker" / "spirals_peri_stim"',
              "concatenate spirals over time across trials"),
         ]),
         ("single trials", [
             ("getWhiskerSingleTrials",
-             'save_folder = DATA_FOLDER / "whisker" / "single_trials"',
+             'save_folder = OUT_FOLDER / "whisker" / "single_trials"',
              "single trial maps (mouse ZYE_0092)"),
         ]),
     ]
     for header, entries in sections:
         nbc.append(nbf.v4.new_markdown_cell(f"## {header}"))
         for func, extra, comment in entries:
-            nbc.append(nbf.v4.new_code_cell(
-                pipeline_cell(func, comment, extra, import_path=WP)))
+            nbc.append(pipeline_code_cell(func, comment, extra, import_path=WP))
     nbf.write(nb, NB / "pipeline5_whisker.ipynb")
     return "pipeline5_whisker.ipynb"
 
@@ -662,6 +846,7 @@ def main():
     # selective generation, e.g. `python tools/make_notebooks.py pipeline4`,
     # to avoid rewriting the (executed) figure notebooks
     pipelines = {
+        "pipeline1": make_pipeline1,
         "pipeline2": make_pipeline2,
         "pipeline3": make_pipeline3,
         "pipeline4": make_pipeline4,
@@ -760,8 +945,8 @@ def main():
     nbf.write(nb, NB / "figure6_task.ipynb")
 
     # pipelines
-    for maker in (make_pipeline2, make_pipeline3, make_pipeline4,
-                  make_pipeline5, make_pipeline6):
+    for maker in (make_pipeline1, make_pipeline2, make_pipeline3,
+                  make_pipeline4, make_pipeline5, make_pipeline6):
         maker()
 
     print("written:", [p.name for p in sorted(NB.glob("figure*.ipynb"))])

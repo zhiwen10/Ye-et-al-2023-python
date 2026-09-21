@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+from tqdm import tqdm
 
 from spirals_py.ephys.utils import get_session_info2
 from spirals_py.spirals.plots._fig1_helpers_s1 import (
@@ -11,6 +12,7 @@ from spirals_py.spirals.plots._fig1_helpers_s1 import (
 from spirals_py.spirals.preprocessing.spiral_detection import spiralDetectionAlgorithm
 from spirals_py.spirals.utils import loadUVt1
 from spirals_py.utils.matio import save_mat73
+from spirals_py.utils.paths import out_root, release_twin
 
 
 def _spiral_detection_session(ops, data_folder, dV, save_folder, out_name):
@@ -24,7 +26,9 @@ def _spiral_detection_session(ops, data_folder, dV, save_folder, out_name):
     rate = 1  # set to 1, if no upsampling in time
     params = _setSpiralDetectionParams(U, t)
     # only detect spirals within ROI
-    roi = _load_roi_vertices(data_folder / "ephys" / "roi" / f"{ops.fname}_roi.mat")
+    roi = _load_roi_vertices(
+        release_twin(out_root() / "ephys" / "roi" / f"{ops.fname}_roi.mat", data_folder)
+    )
     tf = _inROI(roi, params["xx"].ravel(), params["yy"].ravel())
     # only use the grids inside the roi to save time
     params["xxRoi"] = params["xx"].ravel()[tf]
@@ -44,7 +48,7 @@ def getSpiralsRaw(T, data_folder, save_folder):
     data_folder = Path(data_folder)
     save_folder = Path(save_folder)
     save_folder.mkdir(parents=True, exist_ok=True)
-    for kk in range(len(T)):
+    for kk in tqdm(range(len(T)), desc="getSpiralsRaw"):
         ops = get_session_info2(T, kk, data_folder)
         _U, V, _t, _mimg = loadUVt1(ops.session_root)
         dV = np.hstack([np.zeros((V.shape[0], 1)), np.diff(V, axis=1)])

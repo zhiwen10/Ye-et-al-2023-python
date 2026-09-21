@@ -10,6 +10,7 @@ from spirals_py.spirals_mirror.preprocessing._regression_utils import (
     load_kernel_slice,
 )
 from spirals_py.utils.matio import save_mat73
+from spirals_py.utils.paths import out_root, release_twin
 
 
 def getExampleKernelHEMI(T, data_folder, save_folder):
@@ -37,11 +38,9 @@ def getExampleKernelHEMI(T, data_folder, save_folder):
     TheColorImage_all = None
     for kk in range(n_sessions):
         fname = _session_fname(T, kk)
-        path = (
-            data_folder
-            / "spirals_mirror"
-            / "regression_hemi"
-            / f"{fname}-hemi.mat"
+        path = release_twin(
+            out_root() / "spirals_mirror" / "regression_hemi" / f"{fname}-hemi.mat",
+            data_folder,
         )
         # loop through 8 example points
         for kkk in range(8):

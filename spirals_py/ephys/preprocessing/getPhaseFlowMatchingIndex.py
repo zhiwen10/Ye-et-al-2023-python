@@ -2,11 +2,13 @@ from pathlib import Path
 
 import numpy as np
 from matplotlib.path import Path as MplPath
+from tqdm import tqdm
 
 from spirals_py.ephys.preprocessing._regression import compare_flow1, get_wf_mua2
 from spirals_py.ephys.utils import get_session_info2
 from spirals_py.spirals.plots._fig1_helpers_s1 import _load_roi_vertices
 from spirals_py.utils.matio import load_mat_var, save_mat
+from spirals_py.utils.paths import out_root, release_twin
 
 
 def _roi_bw(roi, mimg_shape, scale=4):
@@ -41,15 +43,20 @@ def getPhaseFlowMatchingIndex(T, data_folder, save_folder, rng=None):
     data_folder = Path(data_folder)
     save_folder = Path(save_folder)
     save_folder.mkdir(parents=True, exist_ok=True)
-    for kk in range(len(T)):
+    for kk in tqdm(range(len(T)), desc="getPhaseFlowMatchingIndex"):
         ops = get_session_info2(T, kk, data_folder)
         fname = ops.fname
         explained_var_all = load_mat_var(
-            data_folder / "ephys" / "dv_prediction" / f"{fname}_dv_predict.mat",
+            release_twin(
+                out_root() / "ephys" / "dv_prediction" / f"{fname}_dv_predict.mat",
+                data_folder,
+            ),
             "explained_var_all",
         )
         roi = _load_roi_vertices(
-            data_folder / "ephys" / "roi" / f"{fname}_roi.mat"
+            release_twin(
+                out_root() / "ephys" / "roi" / f"{fname}_roi.mat", data_folder
+            )
         )
         Ut, mimg, V1, dV1, MUA_std = get_wf_mua2(ops)
         scale = 4

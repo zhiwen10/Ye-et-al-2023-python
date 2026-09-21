@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from spirals_py.task.plots._task_helpers_s15 import load_block
 from spirals_py.task.preprocessing._task_io import nanmean, nanstd, save_mat
@@ -54,7 +55,7 @@ def getPsychometricCurve(data_folder, save_folder):
         right_choice_all = np.full((11, sessions), np.nan)
         no_go_all = np.full((11, sessions), np.nan)
 
-        for kk in range(sessions):
+        for kk in tqdm(range(sessions), desc="getPsychometricCurve"):
             _, session_root = session_dirs(data_folder, T1, kk)
             # load block (MATLAB loads [td _ block_en _ mn _Block.mat];
             # the single *_Block.mat of the session is used here)
@@ -126,15 +127,16 @@ def getPsychometricCurve(data_folder, save_folder):
             )
 
             # MATLAB T_ratio column indices (1-based): 3 correct, 4 incorrect,
-            # 5 reject, 6 falarmL, 7 falarmR
+            # 5 reject, 6 falarmL, 7 falarmR.  ratio here drops the leading
+            # contrast column of T_ratio, so MATLAB column c -> ratio[:, c - 2]
             left_choice_all[:, kk] = np.concatenate(
-                [ratio[:5, 3], [ratio[5, 5]], ratio[6:11, 2]]
+                [ratio[:5, 2], [ratio[5, 4]], ratio[6:11, 1]]
             )
             right_choice_all[:, kk] = np.concatenate(
-                [ratio[:5, 2], [ratio[5, 6]], ratio[6:11, 3]]
+                [ratio[:5, 1], [ratio[5, 5]], ratio[6:11, 2]]
             )
             no_go_all[:, kk] = np.concatenate(
-                [ratio[:5, 1], [ratio[5, 4]], ratio[6:11, 1]]
+                [ratio[:5, 0], [ratio[5, 3]], ratio[6:11, 0]]
             )
             rt_median_all[:, kk] = rt_median
             print(f"getPsychometricCurve: {mn} session {kk + 1}/{sessions}")

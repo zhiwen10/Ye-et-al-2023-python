@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+from tqdm import tqdm
 
 from spirals_py.ephys.plots._prediction_example_utils import (
     _imwarp,
@@ -41,7 +42,7 @@ def getVarOrderedByNeuron(T, data_folder, save_folder):
     projectedAtlas1, projectedTemplate1 = _load_outline_mat(data_folder)
     BW = projectedAtlas1.astype(bool)
 
-    for kk in range(len(T)):
+    for kk in tqdm(range(len(T)), desc="getVarOrderedByNeuron"):
         ops = get_session_info2(T, kk, data_folder)
         fname = ops.fname
         U, V, t, mimg = loadUVt1(ops.session_root)
@@ -60,7 +61,7 @@ def getVarOrderedByNeuron(T, data_folder, save_folder):
 
         # first predict using single units, order them by contribution
         explained_var_all = np.full(Ut.shape[:2] + (spike_n,), np.nan)
-        for n_select in range(spike_n):
+        for n_select in tqdm(range(spike_n), desc="getVarOrderedByNeuron:units"):
             MUA_std1 = MUA_std[n_select : n_select + 1, :]
             dV_raw, dV_predict, _epoch_indx = get_prediction(dV1, MUA_std1)
             explained_var = get_variance_explained(Ut, dV_raw, dV_predict)
@@ -80,7 +81,7 @@ def getVarOrderedByNeuron(T, data_folder, save_folder):
 
         # increase number of units incrementally by contribution
         explained_var_all1 = np.full(Ut.shape[:2] + (spike_n,), np.nan)
-        for n_select in range(spike_n):
+        for n_select in tqdm(range(spike_n), desc="getVarOrderedByNeuron:units"):
             MUA_std1 = MUA_std[order[: n_select + 1], :]
             dV_raw, dV_predict, _epoch_indx = get_prediction(dV1, MUA_std1)
             explained_var1 = get_variance_explained(Ut, dV_raw, dV_predict)

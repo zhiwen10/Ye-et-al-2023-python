@@ -16,6 +16,8 @@ which no downstream code reads.
 
 from pathlib import Path
 
+from tqdm import tqdm
+
 from spirals_py.axons.preprocessing.getSpiralsPhaseMap import _session_phase_maps
 from spirals_py.utils.matio import save_mat73
 
@@ -25,7 +27,7 @@ def getSpiralsPhaseMapLeft(T, data_folder, save_folder):
     save_folder = Path(save_folder)
     save_folder.mkdir(parents=True, exist_ok=True)
 
-    for kk in range(7, 15):
+    for kk in tqdm(range(7, 15), desc="getSpiralsPhaseMapLeft"):
         fname, spiral_phase_all_norm = _session_phase_maps(
             T, data_folder, kk, radius=70, direction=0,
             roi=(250, 350, 500, 650), ref_pixel=(70, 48),

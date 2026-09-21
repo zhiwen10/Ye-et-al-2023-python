@@ -150,8 +150,8 @@ def findWheelMoves3(
         gapTooSmall = moveGaps < minGap
         moveOnsets = moveOnsets[np.concatenate([[True], ~gapTooSmall])]
         moveOnsetSamps = moveOnsetSamps[np.concatenate([[True], ~gapTooSmall])]
-        moveOffsets = moveOffsets[np.concatenate([[~gapTooSmall], [True]])]
-        moveOffsetSamps = moveOffsetSamps[np.concatenate([[~gapTooSmall], [True]])]
+        moveOffsets = moveOffsets[np.concatenate([~gapTooSmall, [True]])]
+        moveOffsetSamps = moveOffsetSamps[np.concatenate([~gapTooSmall, [True]])]
 
     moveAmps = pos[moveOffsetSamps - 1] - pos[moveOnsetSamps - 1]
 

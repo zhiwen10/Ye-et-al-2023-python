@@ -1,9 +1,11 @@
 from pathlib import Path
 
 import numpy as np
+from tqdm import tqdm
 
 from spirals_py.ephys.utils import get_session_info2
 from spirals_py.spirals.plots._fig1_helpers_s1 import _padZeros
+from spirals_py.utils.paths import copy_release_twin
 
 
 def _save_roi_mat73(path, verts):
@@ -48,14 +50,14 @@ def getEphysROI(T, data_folder, save_folder):
     params_downscale = 1
     halfpadding = 120
     roi_exist = np.zeros(len(T), dtype=int)
-    for kk in range(len(T)):
+    for kk in tqdm(range(len(T)), desc="getEphysROI"):
         ops = get_session_info2(T, kk, data_folder)
         fname = ops.fname
         mimg = np.load(Path(ops.session_root) / "meanImage.npy")
         # apply mask, this helps speed up spiral detection later
         mimg1 = mimg[::params_downscale, ::params_downscale]
         mimg2 = _padZeros(mimg1, halfpadding)
-        filename = save_folder / f"{fname}_roi.mat"
+        filename = copy_release_twin(save_folder / f"{fname}_roi.mat", data_folder)
         if filename.exists():
             roi_exist[kk] = 1
         else:

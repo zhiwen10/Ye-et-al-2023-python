@@ -1,10 +1,12 @@
 from pathlib import Path
 
 import numpy as np
+from tqdm import tqdm
 
 from spirals_py.ephys.utils import get_session_info2
 from spirals_py.spirals.preprocessing.spiral_detection import getGroupingAlgorithm
 from spirals_py.utils.matio import load_mat_var, save_mat73
+from spirals_py.utils.paths import out_root, release_twin
 
 
 def _group_spirals(pwAll):
@@ -36,17 +38,22 @@ def getEphysSpiralsGrouping(T, data_folder, save_folder):
     data_folder = Path(data_folder)
     save_folder = Path(save_folder)
     save_folder.mkdir(parents=True, exist_ok=True)
-    for kk in range(len(T)):
+    for kk in tqdm(range(len(T)), desc="getEphysSpiralsGrouping"):
         ops = get_session_info2(T, kk, data_folder)
         fname = ops.fname
-        pwAll = load_mat_var(
-            data_folder / "ephys" / "spirals_raw" / f"{fname}_spirals.mat", "pwAll"
+        pwAll_path = release_twin(
+            out_root() / "ephys" / "spirals_raw" / f"{fname}_spirals.mat",
+            data_folder,
         )
+        if not pwAll_path.exists():
+            print(f"getEphysSpiralsGrouping: no spirals_raw output for {fname} "
+                  f"(detection skipped and not in the release), skipping")
+            continue
+        pwAll = load_mat_var(pwAll_path, "pwAll")
         archiveCell = _group_spirals(pwAll)
-        if archiveCell:
-            cell = np.array([[c] for c in archiveCell], dtype=object)
-        else:
-            cell = np.empty((0, 1), dtype=object)
+        cell = np.empty((max(len(archiveCell), 0), 1), dtype=object)
+        for i, c in enumerate(archiveCell):
+            cell[i, 0] = c
         save_mat73(
             save_folder / f"{fname}_spirals_group_fftn.mat",
             {"archiveCell": cell},

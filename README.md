@@ -116,8 +116,36 @@ Open any notebook in `notebooks/` and run the cells top to bottom.
 | `figure4_ephys.ipynb` | `figure4_ephys.m` (Fig. 4 + Ext. Data 12–13) |
 | `figure5_whisker.ipynb` | `figure5_whisker.m` (Fig. 5) |
 | `figure6_task.ipynb` | `figure6_task.m` (Fig. 6 + Ext. Data 14–15) |
+| `pipeline1_spirals.ipynb` | `pipeline1_spirals.m` (spiral preprocessing: regenerates the `spirals/` files; detection cells tagged) |
 | `pipeline2_axons.ipynb` | `pipeline2_axons.m` (axon preprocessing: regenerates the `axons/` + `revision/axons/` files) |
 | `pipeline3_spirals_mirror.ipynb` | `pipeline3_spirals_mirror.m` (mirror-symmetry preprocessing: regenerates the `spirals_mirror/` files) |
 | `pipeline4_ephys.ipynb` | `pipeline4_ephys.m` (ephys preprocessing: regenerates the `ephys/` files) |
 | `pipeline5_whisker.ipynb` | `pipeline5_whisker.m` (whisker preprocessing: regenerates the `whisker/` files) |
 | `pipeline6_task.ipynb` | `pipeline6_task.m` (task preprocessing: regenerates the `task/*.mat` files) |
+
+### Unattended full runs
+
+```bash
+python tools/run_pipeline.py notebooks/pipeline4_ephys.ipynb   # one pipeline
+python tools/run_all.py                                        # all pipelines, in order
+python tools/run_all.py pipeline1 pipeline4                    # subset
+python tools/run_pipeline.py --estimates                       # runtime estimate table
+```
+
+- All pipeline outputs are written to a separate python tree (`D:\data_python`
+  by default; override with the `SPIRALS_OUT_ROOT` environment variable) — the
+  MATLAB data release (`D:\data`) is never overwritten. Inputs are read from
+  the release; chained intermediates fall back to the release copies via
+  `spirals_py.utils.paths.release_twin` when they have not been regenerated.
+- Cells tagged `detection` (the spiral-detection steps, ~1 h/session) are
+  skipped by default; pass `--run-detection` to include them.
+- Each function has a total-runtime estimate (`ESTIMATES_MIN` in
+  `tools/run_pipeline.py`, from the MATLAB run-time comments, observed runs
+  and desktop measurements); cells estimated above `--max-minutes` (default
+  10) are skipped with a log line — raise the threshold to include them.
+- Completed cells are tracked in `<out_root>/.completed_cells.txt` and skipped
+  on later runs (`--redo` to rerun), so interrupted full runs resume.
+- Progress bars: one per notebook cell (`tools/run_pipeline.py`), one overall
+  (`tools/run_all.py`), plus per-session `tqdm` bars inside every
+  preprocessing function. Logs: `D:\data_python\run_all.log` /
+  `run_all.err.log` when launched detached.
