@@ -45,7 +45,11 @@ def _spiral_phase_map(U, dV, t, params, freq, rate, raw_trace2d=False):
         f1, f2 = butter(2, 1 / (Fs / 2), btype="low")
     else:
         f1, f2 = butter(2, np.asarray(freq, dtype=float) / (Fs / 2), btype="bandpass")
-    meanTrace = filtfilt(f1, f2, meanTrace, axis=1)
+    # MATLAB filtfilt pads with 3*(max(len(a),len(b))-1) odd samples
+    # (scipy's default is 3*max(len(a),len(b)) and also errors when the
+    # segment is exactly that long)
+    padlen = 3 * (max(len(f1), len(f2)) - 1)
+    meanTrace = filtfilt(f1, f2, meanTrace, axis=1, padlen=padlen)
 
     traceHilbert = hilbert(meanTrace, axis=1)
     tracePhase = np.angle(traceHilbert)

@@ -72,7 +72,7 @@ def getVarOrderedByNeuron(T, data_folder, save_folder):
         sizeTemplate = projectedTemplate1.shape
         var_reg = _imwarp(explained_var_all, T4, sizeTemplate)
         var_reg1 = var_reg.copy()
-        var_reg1[:, ~BW] = np.nan
+        var_reg1[~BW, :] = np.nan  # MATLAB temp(~BW) = nan per slice
         mean_var = nanmean(var_reg1, axis=(0, 1))
         order = np.argsort(-mean_var, kind="stable")
         B = mean_var[order]
@@ -88,7 +88,7 @@ def getVarOrderedByNeuron(T, data_folder, save_folder):
 
         var_reg2 = _imwarp(explained_var_all1, T4, sizeTemplate)
         var_reg3 = var_reg2.copy()
-        var_reg3[:, ~BW] = np.nan
+        var_reg3[~BW, :] = np.nan
         mean_var2 = nanmean(var_reg3, axis=(0, 1))
 
         save_mat(

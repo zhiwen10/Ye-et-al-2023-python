@@ -49,12 +49,16 @@ def plotSpiralDuration(T, data_folder, save_folder):
     x = np.arange(1, 51) / 35
     plt.errorbar(x, mean_N, yerr=std_N, color="r", capsize=15)
     plt.errorbar(x, mean_N_scramble, yerr=std_N_scramble, color="k", capsize=15)
-    plt.xlim(0, 15 / 35)
-    plt.ylim(0, 1)
     t1 = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
-    plt.xticks(t1, [str(v) for v in t1])
+    # MATLAB string(t1) renders as 0 / 0.2 / ... / 1
+    plt.xticks(t1, ["%g" % v for v in t1])
     plt.xlabel("Spiral duration (ms)")
     plt.ylabel("Spiral ratio")
+    # xlim must come AFTER xticks: set_xticks expands the view limits to the
+    # outermost tick, which would otherwise override xlim(0, 15/35) as MATLAB
+    # does not.
+    plt.xlim(0, 15 / 35)
+    plt.ylim(0, 1)
 
     h1d.tight_layout()
     h1d.savefig(save_folder / "Fig1d_spiral_duration_scramble.pdf")

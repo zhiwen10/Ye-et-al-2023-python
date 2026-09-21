@@ -116,4 +116,8 @@ Open any notebook in `notebooks/` and run the cells top to bottom.
 | `figure4_ephys.ipynb` | `figure4_ephys.m` (Fig. 4 + Ext. Data 12–13) |
 | `figure5_whisker.ipynb` | `figure5_whisker.m` (Fig. 5) |
 | `figure6_task.ipynb` | `figure6_task.m` (Fig. 6 + Ext. Data 14–15) |
+| `pipeline2_axons.ipynb` | `pipeline2_axons.m` (axon preprocessing: regenerates the `axons/` + `revision/axons/` files) |
+| `pipeline3_spirals_mirror.ipynb` | `pipeline3_spirals_mirror.m` (mirror-symmetry preprocessing: regenerates the `spirals_mirror/` files) |
+| `pipeline4_ephys.ipynb` | `pipeline4_ephys.m` (ephys preprocessing: regenerates the `ephys/` files) |
+| `pipeline5_whisker.ipynb` | `pipeline5_whisker.m` (whisker preprocessing: regenerates the `whisker/` files) |
 | `pipeline6_task.ipynb` | `pipeline6_task.m` (task preprocessing: regenerates the `task/*.mat` files) |

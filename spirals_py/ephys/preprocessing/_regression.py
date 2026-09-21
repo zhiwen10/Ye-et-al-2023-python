@@ -91,10 +91,14 @@ def _build_regressor_design(regressors, t_shifts, discontinuities):
     neg = t_shifts < 0
     pos = t_shifts > 0
     if neg.any():
+        # MATLAB cumsum(..., 3, 'reverse'): cumulative OR along the SHIFT
+        # axis (page j <- any discontinuity in shifts j..end)
         block = disc[:, neg]
-        disc_cum[:, neg] = np.cumsum(block[::-1], axis=0)[::-1] > 0
+        disc_cum[:, neg] = np.cumsum(block[:, ::-1], axis=1)[:, ::-1] > 0
     if pos.any():
-        disc_cum[:, pos] = np.cumsum(disc[:, pos], axis=0) > 0
+        # forward cumulative OR along the SHIFT axis (page j <- shifts
+        # start..j)
+        disc_cum[:, pos] = np.cumsum(disc[:, pos], axis=1) > 0
 
     design[np.broadcast_to(disc_cum[:, None, :], design.shape)] = 0.0
     return design.transpose(0, 2, 1).reshape(T, -1)
@@ -149,6 +153,8 @@ def _setup_regression(regressors, signals, t_shifts, lambdas, zs, cvfold,
         aug = np.hstack([design, np.ones((T, 1))])
     else:
         aug = design
+    if ridge.shape[1] != aug.shape[1]:
+        ridge = np.zeros((ridge.shape[0], aug.shape[1]))  # MATLAB [] concatenates cleanly
     A = np.vstack([aug, ridge])
     B = np.vstack([signals.T, np.zeros((ridge.shape[0], nSignals))])
 
@@ -348,7 +354,7 @@ def divide_epoch(dV1, epochN):
         epochSize * np.arange(1, epochN + 1),
     ])
     train_indx = np.concatenate([
-        np.arange(epoch_indx[2 * i - 1, 0], epoch_indx[2 * i - 1, 1] + 1)
+        np.arange(epoch_indx[2 * (i - 1), 0], epoch_indx[2 * (i - 1), 1] + 1)
         for i in range(1, 6)
     ])
     test_indx = epoch_indx[1::2]
@@ -424,7 +430,7 @@ def get_prediction(dV1, MUA_std, perm=0, rng=None):
     dV_raw = []
     dV_predict = []
     for i in range(5):
-        test_indx = np.arange(epoch_indx[2 * i, 0], epoch_indx[2 * i, 1] + 1)
+        test_indx = np.arange(epoch_indx[2 * i + 1, 0], epoch_indx[2 * i + 1, 1] + 1)
         if perm:
             randIndx = rng.permutation(MUA_std.shape[0])
             MUA_std_test = MUA_std[np.ix_(randIndx, test_indx - 1)]

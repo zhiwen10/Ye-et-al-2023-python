@@ -291,12 +291,12 @@ def load_mat_table(path, varname):
     return struct_to_df(m[varname])
 
 
-def nanmean(a, axis=None):
+def nanmean(a, axis=None, keepdims=False):
     """MATLAB mean(..., 'omitnan'): all-NaN slices give NaN (numpy
     nanmean warns; the warning is suppressed)."""
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
-        return np.nanmean(a, axis=axis)
+        return np.nanmean(a, axis=axis, keepdims=keepdims)
 
 
 def nanstd(a, axis=None):

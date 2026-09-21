@@ -43,6 +43,8 @@ def detect_padded_frames(tracePhase, params, frame_start):
         if pwAll5.size:
             # attach frame ID label
             pwAll5 = np.column_stack([pwAll5, np.full((pwAll5.shape[0], 1), frameN)])
+        else:
+            pwAll5 = np.zeros((0, 5))  # MATLAB [] keeps vertcat valid
         pwAll = np.vstack([pwAll, pwAll5])
     return pwAll
 
