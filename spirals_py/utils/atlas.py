@@ -26,7 +26,11 @@ def overlayOutlines(coords, scale, color="k", ax=None):
     return ax
 
 
-def filterProjectedAtlas(projectedAtlas, projectedTemplate, dfolder=Path(r"D:\data\tables")):
+def filterProjectedAtlas(projectedAtlas, projectedTemplate, dfolder=None):
+    if dfolder is None:
+        from spirals_py.utils.paths import data_root
+
+        dfolder = data_root() / "tables"
     """Translated from utils/filterProjectedAtlas.m"""
     st = pd.read_csv(Path(dfolder) / "structure_tree_safe_2017.csv")
     spath = st["structure_id_path"].astype(str)

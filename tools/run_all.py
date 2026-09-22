@@ -13,7 +13,7 @@ already-completed cells are skipped; skipped steps fall back to the
 release outputs via spirals_py.utils.paths.release_twin.  A global tqdm
 bar tracks overall progress; run_pipeline.py adds a per-notebook bar
 with the current function.  All outputs go to the python output tree
-(D:\\data_python), never to the MATLAB release.
+(SPIRALS_OUT_ROOT, see spirals_py/utils/paths.py), never to the release.
 """
 import subprocess
 import sys

@@ -45,8 +45,10 @@ def plotMeanMapsAll(data_folder, save_folder):
         # MATLAB (83, 72, 141, 3) -> x, y, t, condition
         trace_mean_all = np.asarray(f["trace_mean_all"]).transpose(3, 2, 1, 0)
         tracePhase_all = np.asarray(f["tracePhase_all"]).transpose(3, 2, 1, 0)
-    cmax = np.percentile(trace_mean_all, 99.98)
-    cmin = np.percentile(trace_mean_all, 0.02)
+    # MATLAB prctile ignores NaNs; plain np.percentile would return NaN
+    # for the NaN-masked mean maps (all-dark rendering)
+    cmax = np.nanpercentile(trace_mean_all, 99.98)
+    cmin = np.nanpercentile(trace_mean_all, 0.02)
 
     hemi = None
     parula = _parula()

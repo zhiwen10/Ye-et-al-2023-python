@@ -100,8 +100,10 @@ def plotCorrectMapsFlow(data_folder, save_folder):
         vxRaw_all1 = vxRaw_all[53:88]
         vyRaw_all1 = vyRaw_all[53:88]
         if kk == 0:
-            cmax = np.percentile(trace_mean4, 99.98)
-            cmin = np.percentile(trace_mean4, 0.02)
+            # MATLAB prctile ignores NaNs; plain np.percentile would
+            # return NaN for the NaN-masked mean maps (all-dark rendering)
+            cmax = np.nanpercentile(trace_mean4, 99.98)
+            cmin = np.nanpercentile(trace_mean4, 0.02)
         for i in range(14):
             iframe = i + 15  # 0-based; MATLAB iframe = i+15 (1-based)
             frame_temp1 = trace_mean4[:, :, iframe]

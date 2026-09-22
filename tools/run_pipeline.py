@@ -16,7 +16,8 @@ completion.  A cell is skipped when
 
 Skipped steps fall back to the release outputs via
 spirals_py.utils.paths.release_twin, so downstream cells keep working.
-All outputs go to the python output tree (D:\\data_python by default).
+All outputs go to the python output tree (SPIRALS_OUT_ROOT, see
+spirals_py/utils/paths.py).
 """
 import re
 import sys
@@ -195,7 +196,9 @@ def main():
     pbar = tqdm(to_run, desc=nb_path.stem, unit="cell", initial=0)
     done = 0
     for c in pbar:
-        first = next(ln for ln in c.source.splitlines() if ln.strip())
+        first = next(
+            (ln for ln in c.source.splitlines() if ln.strip()), ""
+        )
         pbar.set_postfix_str(first[:60], refresh=True)
         try:
             exec(compile(c.source, str(nb_path), "exec"), ns)

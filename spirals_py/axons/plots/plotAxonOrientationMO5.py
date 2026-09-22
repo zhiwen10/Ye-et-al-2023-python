@@ -96,7 +96,7 @@ def plotAxonOrientationMO5(data_folder, save_folder, rng=None):
     maskPath = MASK_PATHS
 
     # loaded in MATLAB but unused downstream
-    with h5py.File(data_folder / "Revision" / "axons" / "MO_roi.mat") as f:
+    with h5py.File(data_folder / "revision" / "axons" / "MO_roi.mat") as f:
         _roi = np.array(f["roi"])
 
     color2 = _colorcet_C06(180)
@@ -107,7 +107,7 @@ def plotAxonOrientationMO5(data_folder, save_folder, rng=None):
 
     # --- subplot 1: all MO cells, bias relative to MOp ---
     ax1 = axes[0]
-    T1 = pd.read_csv(data_folder / "Revision" / "axons" / "Axon_bias_all_cells_MO.csv")
+    T1 = pd.read_csv(data_folder / "revision" / "axons" / "Axon_bias_all_cells_MO.csv")
     _plot_outlines(ax1, maskPath, st, atlas1, hemi, scale3)
     ax1.set_axis_off()
     ax1.set_aspect("equal")
@@ -118,7 +118,7 @@ def plotAxonOrientationMO5(data_folder, save_folder, rng=None):
 
     # --- subplot 2: MO2 cells with border line ---
     ax2 = axes[1]
-    T1 = pd.read_csv(data_folder / "Revision" / "axons" / "Axon_bias_all_cells_MO2.csv")
+    T1 = pd.read_csv(data_folder / "revision" / "axons" / "Axon_bias_all_cells_MO2.csv")
     _plot_outlines(ax2, maskPath, st, atlas1, hemi, scale3)
     ax2.set_axis_off()
     ax2.set_aspect("equal")

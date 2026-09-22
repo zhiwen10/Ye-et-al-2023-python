@@ -132,10 +132,13 @@ python tools/run_all.py pipeline1 pipeline4                    # subset
 python tools/run_pipeline.py --estimates                       # runtime estimate table
 ```
 
-- All pipeline outputs are written to a separate python tree (`D:\data_python`
-  by default; override with the `SPIRALS_OUT_ROOT` environment variable) — the
-  MATLAB data release (`D:\data`) is never overwritten. Inputs are read from
-  the release; chained intermediates fall back to the release copies via
+- All pipeline outputs are written to a separate python tree — the MATLAB
+  data release is never overwritten. Roots are resolved per platform
+  (`spirals_py/utils/paths.py`): `SPIRALS_DATA_ROOT` (release inputs,
+  default `D:\data` on Windows, `~/data` on macOS/Linux) and
+  `SPIRALS_OUT_ROOT` (python outputs, default `D:\data_python` on Windows,
+  `~/data_python` on macOS/Linux); export the variables to override.
+  Chained intermediates fall back to the release copies via
   `spirals_py.utils.paths.release_twin` when they have not been regenerated.
 - Cells tagged `detection` (the spiral-detection steps, ~1 h/session) are
   skipped by default; pass `--run-detection` to include them.

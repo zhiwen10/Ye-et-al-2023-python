@@ -29,8 +29,10 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-DATA_FOLDER = Path(r"D:\\data")
-FIGURE_FOLDER = DATA_FOLDER / "figures"
+from spirals_py.utils.paths import data_root, out_root
+
+DATA_FOLDER = data_root()  # MATLAB data release (SPIRALS_DATA_ROOT overrides)
+FIGURE_FOLDER = out_root() / "figures"  # figures also go to the python tree
 
 # load session table
 T = pd.read_excel(DATA_FOLDER / "tables" / "spiralSessions3.xlsx")
@@ -42,8 +44,10 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-DATA_FOLDER = Path(r"D:\\data")
-FIGURE_FOLDER = DATA_FOLDER / "figures"
+from spirals_py.utils.paths import data_root, out_root
+
+DATA_FOLDER = data_root()  # MATLAB data release (SPIRALS_DATA_ROOT overrides)
+FIGURE_FOLDER = out_root() / "figures"  # figures also go to the python tree
 
 # load widefield + ephys session table
 T = pd.read_csv(DATA_FOLDER / "tables" / "spirals_ephys_sessions_new2.csv")
@@ -54,8 +58,10 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-DATA_FOLDER = Path(r"D:\\data")
-FIGURE_FOLDER = DATA_FOLDER / "figures"
+from spirals_py.utils.paths import data_root, out_root
+
+DATA_FOLDER = data_root()  # MATLAB data release (SPIRALS_DATA_ROOT overrides)
+FIGURE_FOLDER = out_root() / "figures"  # figures also go to the python tree
 """
 
 
@@ -375,13 +381,13 @@ def pipeline_code_cell(func, comment=None, extra="", args=None, import_path=TP):
 
 
 PIPELINE_SETUP_TAIL = (
-    "DATA_FOLDER = Path(r\"D:\\\\data\")  # MATLAB data release (inputs, read-only)\n"
-    "OUT_FOLDER = out_root()  # python outputs (D:\\\\data_python)\n"
+    "DATA_FOLDER = data_root()  # MATLAB data release (SPIRALS_DATA_ROOT overrides)\n"
+    "OUT_FOLDER = out_root()  # python outputs (SPIRALS_OUT_ROOT overrides)\n"
 )
 
 
 def pipeline_setup(table=None, comment=""):
-    src = "from pathlib import Path\n\nfrom spirals_py.utils.paths import out_root\n\n"
+    src = "from pathlib import Path\n\nfrom spirals_py.utils.paths import data_root, out_root\n\n"
     if table:
         src += "import pandas as pd\n\n"
     src += PIPELINE_SETUP_TAIL

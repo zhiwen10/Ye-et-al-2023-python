@@ -130,10 +130,9 @@ def plot_spiral_pre_post(
             unique_spirals[:, 0], unique_spirals[:, 1], s=3, c=unique_spirals_unit, cmap="hot"
         )
         overlayOutlines(coords, 1, ax=ax1)
-        ax1.invert_yaxis()  # MATLAB set(gca,'Ydir','reverse')
         ax1.set_aspect("equal")
         ax1.set_xlim(0, 1140)
-        ax1.set_ylim(0, 1320)
+        ax1.set_ylim(1320, 0)  # MATLAB YDir reverse with ylim [0, 1320]
         ax1.set_xticks(np.arange(0, 1001, 200))
         ax1.set_yticks(np.arange(0, 1201, 200))
         ax1.set_title(labels[j])
