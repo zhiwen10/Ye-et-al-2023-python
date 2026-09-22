@@ -15,6 +15,11 @@ analysis), translated module by module from
   data release. The `pipeline*_*.ipynb` notebooks translate the preprocessing
   pipelines and regenerate the intermediate `.mat` files the figure notebooks
   read (e.g. `pipeline6_task.ipynb` rewrites everything under `task/`).
+- `notebooks/task_tutorial.ipynb` — doc-style tutorial on the task dataset:
+  Part 1 explains the task design and data layout (with figures), Part 2 walks
+  through one example session hands-on (behavior table, psychometric curve,
+  task vs passive response movies, single-trial waves, session-epoch view).
+  A good entry point before `figure6_task.ipynb`, e.g. for teaching.
 
 ## Installation (conda)
 
